@@ -1,437 +1,310 @@
 package algorithms;
 
 
-import pattern.itemset.Itemset;
-import pattern.itemset.Itemsets;
+import pattern.itemset.ItemU;
+import pattern.itemset.ItemsetU;
+import pattern.itemset.ItemsetsU;
+import pattern.itemset.UTransactionDatabase;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**REFACTOR CODE*/
-public class AprioriAlgo {
+public class AprioriAlgo<T extends Comparable<T>> {
 
-    /** the current level k in the breadth-first search */
+    /** this is the database */
+    protected UTransactionDatabase<T> database;
+
+    /** variable indicating the current level for the Apriori generation
+     // (itemsets of size k) */
     protected int k;
 
-    /** total number of candidates */
+    /** number of candidates generated */
     protected int totalCandidateCount = 0;
 
-    /** number of candidates generated during last execution */
-    protected long startTimestamp; //
+    /**  number of database scan */
+    protected int databaseScanCount = 0;
 
-    /**  start time of last execution */
-    protected long endTimestamp; //
+    /** start time of latest execution */
+    protected long startTimestamp;
 
-    /**  end time of last execution */
-    private int itemsetCount;  //
+    /** end time of latest execution */
+    protected long endTimestamp;
 
-    /** itemset found during last execution */
-    private int databaseSize;
+    /**  the number of itemsets found */
+    private int itemsetCount;
 
-    /** the minimum support set by the user */
-    private int minsupRelative;
-
-    /** A memory representation of the database.
-     * Each position in the list represents a transaction */
-    private List<int[]> database = null;
-
-    /**The  patterns that are found
-     *  (if the user wants to keep them into memory)
-     */
-    protected Itemsets patterns = null;
-
-    /** object to write the output file (if the user wants to write to a file) */
+    /** write to file */
     BufferedWriter writer = null;
 
-    /** maximum pattern length */
-    private int maxPatternLength = 10000;
+    /** Special parameter to set the maximum size of itemsets to be discovered */
+    int maxItemsetSize = Integer.MAX_VALUE;
 
     /**
-     * Default constructor
+     * Constructor
+     * @param database the database for applying this algorithm
      */
-    public AprioriAlgo() {
-
+    public AprioriAlgo(UTransactionDatabase<T> database) {
+        this.database = database;
     }
 
     /**
-     * Method to run the algorithm
-     * @param minsup  a minimum support value as a percentage
-     * @param input  the path of an input file
-     * @param output the path of an input if the result should be saved to a file. If null,
-     *               the result will be kept into memory and this
-     *               method will return the result.
-     * @throws IOException exception if error while writting or reading the input/output file
+     * Run this algorithm
+     * @param minsupp  a minimum support threshold
+     * @param output  the output file path for writing the result
+     * @throws IOException exception if error reading/writing files
      */
-    public Itemsets runAlgorithm(double minsup, String input, String output) throws IOException {
-
-        // if the user wants to keep the result into memory
-        if(output == null){
-            writer = null;
-            patterns =  new Itemsets("FREQUENT ITEMSETS");
-        }else{ // if the user wants to save the result to a file
-            patterns = null;
-            writer = new BufferedWriter(new FileWriter(output));
-        }
-
-        // record the start time
+    public void runAlgorithm(double minsupp, String output) throws IOException {
+        // record start time
         startTimestamp = System.currentTimeMillis();
-
-        // set the number of itemset found to zero
-        itemsetCount = 0;
-        // set the number of candidate found to zero
+        // reset variables for statistics
         totalCandidateCount = 0;
-        // reset the utility for checking the memory usage
+        databaseScanCount = 0;
+        itemsetCount=0;
 
-        // READ THE INPUT FILE
-        // variable to count the number of transactions
-        databaseSize = 0;
-        // Map to count the support of each item
-        // Key: item  Value : support
-        Map<Integer, Integer> mapItemCount = new HashMap<Integer, Integer>(); // to count the support of each item
+        // prepare the output file
+        writer = new BufferedWriter(new FileWriter(output));
+        ExecutorService executor = Executors.newFixedThreadPool(10000);
 
-        database = new ArrayList<>(); // the database in memory (intially empty)
-
-        // scan the database to load it into memory and count the support of each single item at the same time
-        BufferedReader reader = new BufferedReader(new FileReader(input));
-        String line;
-        // for each line (transactions) until the end of the file
-        while (((line = reader.readLine()) != null)) {
-            // if the line is  a comment, is  empty or is a
-            // kind of metadata
-            if (line.isEmpty() ||
-                    line.charAt(0) == '#' || line.charAt(0) == '%'
-                    || line.charAt(0) == '@') {
-                continue;
-            }
-            // split the line according to spaces
-            String[] lineSplited = line.split(" ");
-
-            // create an array of int to store the items in this transaction
-            int[] transaction = new int[lineSplited.length];
-
-            // for each item in this line (transaction)
-            for (int i=0; i< lineSplited.length; i++) {
-                // transform this item from a string to an integer
-                Integer item = Integer.parseInt(lineSplited[i]);
-                // store the item in the memory representation of the database
-                transaction[i] = item;
-                // increase the support count
-                Integer count = mapItemCount.get(item);
-                if (count == null) {
-                    mapItemCount.put(item, 1);
-                } else {
-                    mapItemCount.put(item, ++count);
-                }
-            }
-            // add the transaction to the database
-            database.add(transaction);
-            // increase the number of transaction
-            databaseSize++;
-        }
-        // close the input file
-        reader.close();
-
-        /**
-         database = [
-         [1, 3, 4],
-         [2, 3, 5],
-         [1, 2, 3, 5],
-         [2, 5],
-         [1, 2, 3, 5]
-         ]
-         */
-        // convert the minimum support as a percentage to a
-        // relative minimum support as an integer
-        this.minsupRelative = (int) Math.ceil(minsup * databaseSize);
-
-        // we start looking for itemset of size 1
+        // Generate candidates with size k = 1 (all itemsets of size 1)
         k = 1;
+        Set<ItemsetU<T>> candidatesSize1 = generateCandidateSize1();
 
-        // We add all frequent items to the set of candidate of size 1
-        List<Integer> frequent1 = new ArrayList<Integer>();
-        for(Map.Entry<Integer, Integer> entry : mapItemCount.entrySet()){
-            if(entry.getValue() >= minsupRelative){
-                frequent1.add(entry.getKey());
-                saveItemsetToFile(entry.getKey(), entry.getValue());
-            }
-        }
+        // increase the number of candidates generated
+        totalCandidateCount+=candidatesSize1.size();
 
-        // We sort the list of candidates by lexical order
-        // (Apriori need to use a total order otherwise it does not work)
-        frequent1.sort(new Comparator<Integer>() {
-            public int compare(Integer o1, Integer o2) {
-                return o1 - o2;
-            }
-        });
+        // calculate the support of each candidate of size 1
+        // by scanning the database
+        calculateSupportForEachCandidate(candidatesSize1);
 
-        // If no frequent item, the algorithm stops!
-        if(frequent1.size() == 0 || maxPatternLength <= 1){
+        // To build level 1, we keep only the frequent candidates.
+        // We scan the database one time to calculate the support of each candidate.
+        Set<ItemsetU<T>> level = createLevelWithFrequentCandidates(minsupp,
+                candidatesSize1);
 
-            // record end time
-            endTimestamp = System.currentTimeMillis();
-
-            // close the output file if we used it
-            if(writer != null){
-                writer.close();
-            }
-            return patterns;
-        }
-
-        // add the frequent items of size 1 to the total number of candidates
-        totalCandidateCount += frequent1.size();
-
-
-        // Now we will perform a loop to find all frequent itemsets of size > 1
-        // starting from size k = 2.
-        // The loop will stop when no candidates can be generated.
-        List<Itemset> level = null;
+        // Now this is the recursive step
+        // itemsets of size k will be generated recursively starting from k=2
+        //  by using itemsets of size k-1 until no candidates
+        // can be generated
         k = 2;
-        do{
+        Set<ItemsetU<T>> maximalFrequentItemsets = new HashSet<>();
 
+        // While the level is not empty
+        while (!level.isEmpty()  && k <= maxItemsetSize) {
             // Generate candidates of size K
-            List<Itemset> candidatesK;
-
-            // if we are at level k=2, we use an optimization to generate candidates
-            if(k ==2){
-                candidatesK = generateCandidate2(frequent1);
-            }else{
-                // otherwise we use the regular way to generate candidates
-                candidatesK = generateCandidateSizeK(level);
-            }
-
-            // we add the number of candidates generated to the total
-            totalCandidateCount += candidatesK.size();
+            Set<ItemsetU<T>> candidatesK = generateCandidateSizeK(level);
+            // increase the candidate count
+            totalCandidateCount+=candidatesK.size();
 
             // We scan the database one time to calculate the support
-            // of each candidates and keep those with higher support.
-            // For each transaction:
-            for(int[] transaction: database){
-                /** OPTIMIZATION: Skip transactions shorter than k!*/
-                if(transaction.length < k) {
-                    continue;
-                }
-                // for each candidate:
-                for (Itemset candidate : candidatesK) {
-                    // a variable that will be used to check if
-                    // all items of candidate are in this transaction
-                    int pos = 0;
-                    // for each item in this transaction
-                    for (int item : transaction) {
-                        // if the item corresponds to the current item of candidate
-                        if (item == candidate.itemset[pos]) {
-                            // we will try to find the next item of candidate next
-                            pos++;
-                            // if we found all items of candidate in this transaction
-                            if (pos == candidate.itemset.length) {
-                                // we increase the support of this candidate
-                                candidate.support++;
-                                break; // exit the loop for this candidate
-                            }
-                            // Because of lexical order, we don't need to
-                            // continue scanning the transaction if the current item
-                            // is larger than the one that we search for in the candidate.
-                        } else if (item > candidate.itemset[pos]) {
-                            break; // exit the loop for this candidate
-                        }
-                    }
-                }
-            }
+            // of each candidates.
+            calculateSupportForEachCandidate(candidatesK);
 
             // We build the level k+1 with all the candidates that have
             // a support higher than the minsup threshold.
-            level = new ArrayList<Itemset>();
-            if(k < maxPatternLength +1){
-                for (Itemset candidate : candidatesK) {
-                    // if the support is > minsup
-                    if (candidate.getAbsoluteSupport() >= minsupRelative) {
-                        // add the candidate
-                        level.add(candidate);
-                        // the itemset is frequent so save it into results
-                        saveItemset(candidate);
-                    }
-                }
-            }
-            // we will generate larger itemsets next.
+            Set<ItemsetU<T>> levelK = createLevelWithFrequentCandidates(
+                    minsupp, candidatesK);
+
+            level = levelK; // We keep only the last level...
             k++;
-        }while(!level.isEmpty());
-
-
-
+        }
+        // close the output file
+        writer.close();
         // record end time
         endTimestamp = System.currentTimeMillis();
+    }
 
-        // close the output file if the result was saved to a file.
-        if(writer != null){
-            writer.close();
-        }
 
-        return patterns;
+    /**
+     * Save an itemset to the output file.
+     * @param itemset  the itemset
+     * @throws IOException exception if error writing the itemset to the file
+     */
+    private void saveItemsetToFile(ItemsetU<T> itemset) throws IOException{
+        writer.write(itemset.toString() + " #SUP: " + itemset.getExpectedSupport());
+        writer.newLine();
+        itemsetCount++;
     }
 
     /**
-     * This method generates candidates itemsets of size 2 based on
-     * itemsets of size 1.
-     * @param frequent1  the list of frequent itemsets of size 1.
-     * @return a List of Itemset that are the candidates of size 2.
+     * Take a set of candidates and compare them with the min expected support to keep
+     * only the itemset meeting that  minimum threshold.
+     * @param minsupp  the minimum expected threshold
+     * @param candidatesK  a set of itemsets of size k
+     * @return  the set of frequent itemsets of size k 
+     * @throws IOException exception if error writing output file
      */
-    private List<Itemset> generateCandidate2(List<Integer> frequent1) {
-        List<Itemset> candidates = new ArrayList<>();
-
-        // For each itemset I1 and I2 of level k-1
-        for (int i = 0; i < frequent1.size(); i++) {
-            Integer item1 = frequent1.get(i);
-            for (int j = i + 1; j < frequent1.size(); j++) {
-                Integer item2 = frequent1.get(j);
-
-                // Create a new candidate by combining itemset1 and itemset2
-                candidates.add(new Itemset(new int []{item1, item2}));
+    protected Set<ItemsetU<T>> createLevelWithFrequentCandidates(double minsupp,Set<ItemsetU<T>> candidatesK) throws IOException {
+        Set<ItemsetU<T>> levelK = new HashSet<ItemsetU<T>>();
+        // for each itemset
+        for (ItemsetU<T> candidate : candidatesK) {
+            // check if it has enough support
+            if (candidate.getExpectedSupport() >= minsupp && maxItemsetSize >=1) {
+                // if yes add it to the set of frequent itemset of size k
+                levelK.add(candidate);
+                // save the itemset to the output file
+                saveItemsetToFile(candidate);
             }
+        }
+        // return frequent k-itemsets
+        return levelK;
+    }
+
+    /**
+     * Calculate the support of a set of candidates by scanning the database.
+     * @param candidatesK  a set of candidates of size k
+     */
+    protected void calculateSupportForEachCandidate(Set<ItemsetU<T>> candidatesK) {
+        // increase database scan count
+        databaseScanCount++;
+
+        for (ItemsetU<T> transaction : database.getTransactions()) {
+            for (ItemsetU<T> candidate : candidatesK) {
+                double expectedSupport = calculateExpectedSupport(candidate, transaction);
+                candidate.increaseSupportBy(expectedSupport);
+            }
+        }
+    }
+
+    private double calculateExpectedSupport(ItemsetU<T> candidate, ItemsetU<T> transaction) {
+        double expectedSupport = 0;
+
+        for (ItemU<T> item : candidate.getItems()) {
+            boolean found = false;
+
+            for (ItemU<T> itemT : transaction.getItems()) {
+                if (item.getId() == itemT.getId()) {
+                    found = true;
+                    expectedSupport = (expectedSupport == 0) ? itemT.getProbability() : expectedSupport * itemT.getProbability();
+                    break;
+                } else if (item.getId().compareTo(itemT.getId()) < 0) {
+                    break;
+                }
+            }
+
+            if (!found) {
+                return 0; // If any item is not found, expected support is 0
+            }
+        }
+
+        return expectedSupport;
+    }
+
+
+    /**
+     * Generate candidate itemsets containing a single item.
+     * @return a set of candidate itemsets
+     */
+    protected Set<ItemsetU<T>> generateCandidateSize1() {
+        // create the set of candidates as empty
+        Set<ItemsetU<T>> candidates = new HashSet<>();
+        // for each item
+        for (ItemU<T> item : database.getAllItems()) {
+            // simply add it to the set of candidates
+            ItemsetU<T> itemset = new ItemsetU<>();
+            itemset.addItem(item);
+            candidates.add(itemset);
         }
         return candidates;
     }
 
     /**
-     * Method to generate itemsets of size k from frequent itemsets of size K-1.
-     * @param levelK_1  frequent itemsets of size k-1
-     * @return itemsets of size k
+     * Generate candidate itemsets of size K by using HWTUIs of size k-1
+     * @param levelK_1   itemsets of size k-1
+     * @return  candidates of size K
      */
+    protected Set<ItemsetU<T>> generateCandidateSizeK(Set<ItemsetU<T>> levelK_1) {
+        // a set to store candidates
+        Set<ItemsetU<T>> candidates = new HashSet<ItemsetU<T>>();
 
-    protected List<Itemset> generateCandidateSizeK(List<Itemset> levelK_1) {
-        List<Itemset> candidates = new ArrayList<>();
+        // For each itemset I1 and I2 of level k-1
+        Object[] itemsets = levelK_1.toArray();
+        for(int i=0; i< levelK_1.size(); i++){
+            ItemsetU<T> itemset1 = (ItemsetU<T>)itemsets[i];
+            for(int j=0; j< levelK_1.size(); j++){
+                ItemsetU<T> itemset2 = (ItemsetU<T>)itemsets[j];
 
-        for (int i = 0; i < levelK_1.size(); i++) {
-            int[] itemset1 = levelK_1.get(i).itemset;
-
-            for (int j = i + 1; j < levelK_1.size(); j++) {
-                int[] itemset2 = levelK_1.get(j).itemset;
-
-                // Compare items of itemset1 and itemset2.
-                // If they have all the same k-1 items and the last item of
-                // itemset1 is smaller than the last item of itemset2,
-                // generate a candidate.
-                boolean isValid = true;
-                int[] newItemset = new int[itemset1.length + 1];
-
-                for (int k = 0; k < itemset1.length; k++) {
-                    // If they are the last items
-                    if (k == itemset1.length - 1) {
-                        // The one from itemset1 should be smaller (lexical order)
-                        // and different from the one of itemset2
-                        if (itemset1[k] >= itemset2[k]) {
-                            isValid = false;
-                            break;
-                        }
-                    } else if (itemset1[k] < itemset2[k]) {
-                        // If they are not the last items, and itemset1[k] < itemset2[k]
-                        // continue searching
-                        isValid = false;
-                        break;
-                    } else if (itemset1[k] > itemset2[k]) {
-                        // If itemset1[k] > itemset2[k], stop searching because of lexical order
-                        isValid = false;
-                        break;
+                // If I1 is smaller than I2 according to lexical order and
+                // they share all the same items except the last one.
+                ItemU<T> missing = itemset1.allTheSameExceptLastItem(itemset2);
+                if(missing != null){
+                    // Then, create a new candidate by combining itemset1 and itemset2
+                    ItemsetU<T> candidate = new ItemsetU<T>();
+                    for(ItemU<T> item : itemset1.getItems()){
+                        candidate.addItem(item);
                     }
-
-                    // Copy items from itemset1 to newItemset
-                    newItemset[k] = itemset1[k];
-                }
-
-                if (isValid) {
-                    // Copy the last item from itemset2 to newItemset
-                    newItemset[itemset1.length] = itemset2[itemset2.length - 1];
+                    candidate.addItem(missing);
 
                     // The candidate is tested to see if its subsets of size k-1 are included in
                     // level k-1 (they are frequent).
-                    if (allSubsetsOfSizeK_1AreFrequent(newItemset, levelK_1)) {
-                        candidates.add(new Itemset(newItemset));
+                    if(allSubsetsOfSizeK_1AreFrequent(candidate,levelK_1)){
+                        // if it pass the test, add it to the set of candidates
+                        candidates.add(candidate);
                     }
                 }
             }
         }
-
-        return candidates; // Return the set of candidates
+        // return the set of candidates
+        return candidates;
     }
+
     /**
-     * Method to check if all the subsets of size k-1 of a candidate of size k are frequent
-     * @param candidate a candidate itemset of size k
-     * @param levelK_1  the frequent itemsets of size k-1
-     * @return true if all the subsets are frequet
+     * Check if all subsets of size k-1 of a candidate itemset of size k are frequent.
+     * @param candidate  the candidate itemset
+     * @param levelK_1  frequent itemsets of size k-1
+     * @return true if all subsets are frequent, otherwise false
      */
-    protected boolean allSubsetsOfSizeK_1AreFrequent(int[] candidate, List<Itemset> levelK_1) {
-        // generate all subsets by always each item from the candidate, one by one
-        for(int posRemoved=0; posRemoved< candidate.length; posRemoved++){
+    protected boolean allSubsetsOfSizeK_1AreFrequent(ItemsetU<T> candidate, Set<ItemsetU<T>> levelK_1) {
+        // To generate all the set of size K-1, we will proceed
+        // by removing each item, one by one.
 
-            // perform a binary search to check if  the subset appears in  level k-1.
-            int first = 0;
-            int last = levelK_1.size() - 1;
-
-            // variable to remember if we found the subset
+        //if only one item, return true because the empty set is always frequent
+        if(candidate.size() == 1){
+            return true;
+        }
+        // for each item
+        for(ItemU<T> item : candidate.getItems()){
+            // copy the itemset without this item to get a suset
+            ItemsetU<T> subset = candidate.cloneItemSetMinusOneItem(item);
             boolean found = false;
-            // the binary search
-            while( first <= last )
-            {
-                int middle = ( first + last ) >>1 ; // >>1 means to divide by 2
-
-                int comparison = ArraysAlgos.sameAs(levelK_1.get(middle).getItems(), candidate, posRemoved);
-                if(comparison < 0 ){
-                    first = middle + 1;  //  the itemset compared is larger than the subset according to the lexical order
-                }
-                else if(comparison  > 0 ){
-                    last = middle - 1; //  the itemset compared is smaller than the subset  is smaller according to the lexical order
-                }
-                else{
-                    found = true; //  we have found it so we stop
+            // we scan itemsets of size k-1
+            for(ItemsetU<T> itemset : levelK_1){
+                // if we found the subset, then set found to true 
+                // and stop this loop
+                if(itemset.isEqualTo(subset)){
+                    found = true;
                     break;
                 }
             }
-
-            if(!found){  // if we did not find it, that means that candidate is not a frequent itemset because
-                // at least one of its subsets does not appear in level k-1.
+            // if the subset was not found, then we return false
+            if(!found){
                 return false;
             }
         }
+        // all the subsets were found, so we return true
         return true;
     }
 
-    void saveItemset(Itemset itemset) throws IOException {
-        itemsetCount++;
-
-        // if the result should be saved to a file
-        if(writer != null){
-            writer.write(itemset.toString() + " #SUP: "
-                    + itemset.getAbsoluteSupport());
-            writer.newLine();
-        }// otherwise the result is kept into memory
-        else{
-            patterns.addItemset(itemset, itemset.size());
-        }
-    }
-
-    void saveItemsetToFile(Integer item, Integer support) throws IOException {
-        itemsetCount++;
-
-        // if the result should be saved to a file
-        if(writer != null){
-            writer.write(item + " #SUP: " + support);
-            writer.newLine();
-        }// otherwise the result is kept into memory
-        else{
-            Itemset itemset = new Itemset(item);
-            itemset.setAbsoluteSupport(support);
-            patterns.addItemset(itemset, 1);
-        }
-    }
-
     /**
-     * Print statistics about the algorithm execution to System.out.
+     * Print statistics about the latest execution.
      */
     public void printStats() {
-        System.out.println("=============  APRIORI - STATS =============");
+        System.out
+                .println("=============  U-APRIORI - STATS =============");
+        long temps = endTimestamp - startTimestamp;
+//		System.out.println(" Total time ~ " + temps + " ms");
+        System.out.println(" Transactions count from database : "
+                + database.size());
         System.out.println(" Candidates count : " + totalCandidateCount);
-        System.out.println(" The algorithm stopped at size " + (k - 1));
-        System.out.println(" Frequent itemsets count : " + itemsetCount);
-        System.out.println(" Total time ~ " + (endTimestamp - startTimestamp) + " ms");
-        System.out.println("===================================================");
+        System.out.println(" Database scan count : " + databaseScanCount);
+        System.out.println(" The algorithm stopped at size " + (k - 1)
+                + ", because there is no candidate");
+        System.out.println(" Uncertain itemsets count : " + itemsetCount);
+
+        System.out.println(" Total time ~ " + temps + " ms");
+        System.out
+                .println("===================================================");
     }
 
     /**
@@ -439,6 +312,6 @@ public class AprioriAlgo {
      * @param length the maximum length
      */
     public void setMaximumPatternLength(int length) {
-        maxPatternLength = length;
+        this.maxItemsetSize = length;
     }
 }
