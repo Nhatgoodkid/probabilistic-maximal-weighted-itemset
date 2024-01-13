@@ -10,7 +10,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-/**REFACTOR CODE*/
 public class AprioriAlgo<T extends Comparable<T>> {
 
     /** this is the database */
@@ -34,6 +33,7 @@ public class AprioriAlgo<T extends Comparable<T>> {
 
     /**  the number of itemsets found */
     private int itemsetCount;
+    Set<ItemsetU<T>> allFrequentItemsets = new HashSet<>();
 
     /** write to file */
     BufferedWriter writer = null;
@@ -65,7 +65,6 @@ public class AprioriAlgo<T extends Comparable<T>> {
 
         // prepare the output file
         writer = new BufferedWriter(new FileWriter(output));
-        ExecutorService executor = Executors.newFixedThreadPool(10000);
 
         // Generate candidates with size k = 1 (all itemsets of size 1)
         k = 1;
@@ -88,13 +87,14 @@ public class AprioriAlgo<T extends Comparable<T>> {
         //  by using itemsets of size k-1 until no candidates
         // can be generated
         k = 2;
-        Set<ItemsetU<T>> maximalFrequentItemsets = new HashSet<>();
+        Set<ItemsetU<T>> previousLevel = new HashSet<>();
 
         // While the level is not empty
         while (!level.isEmpty()  && k <= maxItemsetSize) {
             // Generate candidates of size K
             Set<ItemsetU<T>> candidatesK = generateCandidateSizeK(level);
             // increase the candidate count
+
             totalCandidateCount+=candidatesK.size();
 
             // We scan the database one time to calculate the support
@@ -105,10 +105,12 @@ public class AprioriAlgo<T extends Comparable<T>> {
             // a support higher than the minsup threshold.
             Set<ItemsetU<T>> levelK = createLevelWithFrequentCandidates(
                     minsupp, candidatesK);
+            previousLevel = level;
 
-            level = levelK; // We keep only the last level...
+            level = levelK; // We keep only the last level...'
             k++;
         }
+
         // close the output file
         writer.close();
         // record end time
@@ -132,7 +134,7 @@ public class AprioriAlgo<T extends Comparable<T>> {
      * only the itemset meeting that  minimum threshold.
      * @param minsupp  the minimum expected threshold
      * @param candidatesK  a set of itemsets of size k
-     * @return  the set of frequent itemsets of size k 
+     * @return  the set of frequent itemsets of size k
      * @throws IOException exception if error writing output file
      */
     protected Set<ItemsetU<T>> createLevelWithFrequentCandidates(double minsupp,Set<ItemsetU<T>> candidatesK) throws IOException {
@@ -142,9 +144,12 @@ public class AprioriAlgo<T extends Comparable<T>> {
             // check if it has enough support
             if (candidate.getExpectedSupport() >= minsupp && maxItemsetSize >=1) {
                 // if yes add it to the set of frequent itemset of size k
+
                 levelK.add(candidate);
+
                 // save the itemset to the output file
                 saveItemsetToFile(candidate);
+
             }
         }
         // return frequent k-itemsets
@@ -217,14 +222,14 @@ public class AprioriAlgo<T extends Comparable<T>> {
     protected Set<ItemsetU<T>> generateCandidateSizeK(Set<ItemsetU<T>> levelK_1) {
         // a set to store candidates
         Set<ItemsetU<T>> candidates = new HashSet<ItemsetU<T>>();
-
         // For each itemset I1 and I2 of level k-1
         Object[] itemsets = levelK_1.toArray();
+
         for(int i=0; i< levelK_1.size(); i++){
             ItemsetU<T> itemset1 = (ItemsetU<T>)itemsets[i];
+            System.out.println(itemset1);
             for(int j=0; j< levelK_1.size(); j++){
                 ItemsetU<T> itemset2 = (ItemsetU<T>)itemsets[j];
-
                 // If I1 is smaller than I2 according to lexical order and
                 // they share all the same items except the last one.
                 ItemU<T> missing = itemset1.allTheSameExceptLastItem(itemset2);

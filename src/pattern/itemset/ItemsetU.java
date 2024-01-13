@@ -6,6 +6,7 @@ import java.util.*;
 public class ItemsetU<T extends Comparable<T>>{
     // an itemset is an ordered list of items
     private List<ItemU<T>> items = new ArrayList<>();
+
     // the expected support
     private double expectedsupport = 0;
     /**
@@ -49,7 +50,6 @@ public class ItemsetU<T extends Comparable<T>>{
      */
     public void addItem(ItemU<T> value){
         items.add(value);
-
     }
 
     /**
@@ -132,6 +132,7 @@ public class ItemsetU<T extends Comparable<T>>{
         return true;
     }
 
+    //USE COMPARE TO
     /**
      * Check if this itemset is equal to another one.
      * @param itemset2 the other itemset
@@ -190,8 +191,8 @@ public class ItemsetU<T extends Comparable<T>>{
     }
 
     /**
-     * check if the item from this itemset are all the same as those of itemset2 
-     * except the last item 
+     * check if the item from this itemset are all the same as those of itemset2
+     * except the last item
      * and that itemset2 is lexically smaller than this itemset. If all these conditions are satisfied,
      * this method return the last item of itemset2. Otherwise it returns null.
      * @return the last item of itemset2, or null.

@@ -1,11 +1,14 @@
 import algorithms.AprioriAlgo;
 import algorithms.CGEB;
 import pattern.itemset.UTransactionDatabase;
-import ultil.GenerateProb;
+import util.GenerateProb;
+import util.ReduceFileSize;
+
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+
 
 public class Main {
 
@@ -16,13 +19,25 @@ public class Main {
         // Loading the binary context
         UTransactionDatabase context = new UTransactionDatabase();
 
+        // Generate probability
         GenerateProb generateProb = new GenerateProb(fileToPath(inputPath), inputWithProbPath);
         String afterGen = generateProb.RandomProbProvider(generateProb);
+
+        // File Path dataset you need to reduce
+        String originalFilePath = ".//T40I10D100K_with_P.dat.txt";
+        // Output you want to save after success reduced size
+        String reducedFilePath = "reducedFile.txt";
+        // Change percentage depends on requirement
+        double percentage = 0.2;
+
+        ReduceFileSize reduceFileSize = new ReduceFileSize(originalFilePath, reducedFilePath, percentage);
+        // Reduce large dataset with a certain percentage
+        reducedFilePath = reduceFileSize.reduceFileSize(reduceFileSize);
+
         try {
-            context.loadFile(fileToPath("test.txt"));
+            context.loadFile(reducedFilePath);
+//            context.loadFile(fileToPath("test.txt"));
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
         context.printDatabase();
@@ -35,12 +50,13 @@ public class Main {
 
         // Uncomment the following line to set the maximum pattern length (number of items per itemset)
 //		algo.setMaximumPatternLength(2);
-        double minSup = 0.4; //
+        double minSup = 0.1; //
 
         algo.runAlgorithm(minSup, output);
         algo.printStats();
 
     }
+
 
 
     public static String fileToPath(String filename) throws UnsupportedEncodingException {
