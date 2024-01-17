@@ -3,7 +3,6 @@ package algorithms;
 
 import pattern.itemset.ItemU;
 import pattern.itemset.ItemsetU;
-import pattern.itemset.ItemsetsU;
 import pattern.itemset.UTransactionDatabase;
 
 import java.io.*;
@@ -33,7 +32,6 @@ public class AprioriAlgo<T extends Comparable<T>> {
 
     /**  the number of itemsets found */
     private int itemsetCount;
-    Set<ItemsetU<T>> allFrequentItemsets = new HashSet<>();
 
     /** write to file */
     BufferedWriter writer = null;
@@ -105,7 +103,6 @@ public class AprioriAlgo<T extends Comparable<T>> {
             // a support higher than the minsup threshold.
             Set<ItemsetU<T>> levelK = createLevelWithFrequentCandidates(
                     minsupp, candidatesK);
-            previousLevel = level;
 
             level = levelK; // We keep only the last level...'
             k++;

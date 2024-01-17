@@ -132,7 +132,6 @@ public class ItemsetU<T extends Comparable<T>>{
         return true;
     }
 
-    //USE COMPARE TO
     /**
      * Check if this itemset is equal to another one.
      * @param itemset2 the other itemset
@@ -226,5 +225,17 @@ public class ItemsetU<T extends Comparable<T>>{
         this.items = items;
     }
 
+    public ItemsetU<T> getSubsetWithoutItem(ItemU<T> itemToExclude) {
+        // Create a new itemset
+        ItemsetU<T> subset = new ItemsetU<>();
 
+        // Add all items except the one to be excluded
+        for (ItemU<T> item : items) {
+            if (!item.equals(itemToExclude)) {
+                subset.addItem(item);
+            }
+        }
+
+        return subset;
+    }
 }

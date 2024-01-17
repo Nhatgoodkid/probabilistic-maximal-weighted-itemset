@@ -35,8 +35,8 @@ public class Main {
         reducedFilePath = reduceFileSize.reduceFileSize(reduceFileSize);
 
         try {
-            context.loadFile(reducedFilePath);
-//            context.loadFile(fileToPath("test.txt"));
+//            context.loadFile(reducedFilePath);
+            context.loadFile(fileToPath("test.txt"));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -56,8 +56,6 @@ public class Main {
         algo.printStats();
 
     }
-
-
 
     public static String fileToPath(String filename) throws UnsupportedEncodingException {
         URL url = Main.class.getResource(filename);

@@ -43,7 +43,16 @@ public class ReduceFileSize {
         this.percentage = percentage;
     }
 
-    public String reduceFileSize(ReduceFileSize reduceFileSize)  throws IOException {
+
+    /**
+     * Resize a database to X % of its size
+     * @param reduceFileSize contains the input file path
+     * the output file path
+     * the percentage of the size that the original database that the output database should have
+     * @throws IOException if an error while reading/writing files.
+     * @throws NumberFormatException if an error while reading the file
+     */
+    public String reduceFileSize(ReduceFileSize reduceFileSize)  throws IOException, NumberFormatException{
         // Read all lines from the original file
         List<String> allLines = Files.readAllLines(Path.of(reduceFileSize.getOriginFilePath()));
 
