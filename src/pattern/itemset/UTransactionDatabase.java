@@ -78,7 +78,6 @@ public class UTransactionDatabase<T extends Comparable<T>> {
             // get the existential probability
             double value = Double.parseDouble(itemString.substring(
                     indexOfLeftParanthesis + 1, indexOfRightParanthesis));
-
             // create an item
             ItemU<T> item = new ItemU<T>(itemID, value);
             // add it to the transaction

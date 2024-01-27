@@ -46,7 +46,7 @@ public class CGEB<T extends Comparable<T>> {
                 }
 
                 // Check if X satisfies lower bound and count conditions
-                double lbE_X = calculateLbE(minSup, minProbThreshold, 0.5);
+                double lbE_X = calculateLbE(0.06, minProbThreshold);
                 if (E_X >= lbE_X && count_X >= minSup) {
                     ItemsetU<T> candidate = new ItemsetU<>();
                     candidate.addItem(X);
@@ -65,10 +65,10 @@ public class CGEB<T extends Comparable<T>> {
         return new ArrayList<>(confirmedPMFIs);
     }
 
-    public static double calculateLbE(double T, double minProbThreshold, double t) {
+    public static double calculateLbE(double T, double minProbThreshold) {
         double lnMinProbThreshold = Math.log(minProbThreshold);
 
-        double firstTerm = 2 * T - lnMinProbThreshold - Math.sqrt(Math.pow(lnMinProbThreshold, 2) - 8 * t * lnMinProbThreshold);
+        double firstTerm = 2 * T - lnMinProbThreshold - Math.sqrt(Math.pow(lnMinProbThreshold, 2) - 8 * minProbThreshold * lnMinProbThreshold);
 
         return firstTerm / 2;
     }
