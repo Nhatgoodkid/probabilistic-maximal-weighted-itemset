@@ -23,8 +23,7 @@ public class MainGenerateProb {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-//        context.printDatabase();
-
+        context.printDatabase();
     }
 
     public static String fileToPath(String filename) throws UnsupportedEncodingException {

@@ -122,7 +122,8 @@ public class AprioriAlgo<T extends Comparable<T>> {
      */
     private void saveItemsetToFile(ItemsetU<T> itemset) throws IOException{
 //        writer.write(itemset.toString() + " #SUP: " + itemset.getExpectedSupport());
-        writer.write(itemset.toString());
+//        writer.write(itemset.toString());
+        writer.write(itemset.toString() + " #SUP: " + itemset.getExpectedSupport());
         writer.newLine();
         itemsetCount++;
     }

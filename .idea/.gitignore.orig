@@ -1,0 +1,13 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Datasource local storage ignored files
+/../../../../:\CDNC1\source\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+<<<<<<< HEAD
+=======
+
+/T40I10D100K_with_P.dat.txt
+>>>>>>> d8285a85da16471be8913c06c3773dad6a6efcb4
