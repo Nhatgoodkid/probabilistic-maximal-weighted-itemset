@@ -12,7 +12,7 @@ public class MainAPFI_MAX {
 
 	public static void main(String[] args) {
 		// Load the uncertain database
-		List<UncertainTransaction<String>> uncertainDB = new ArrayList<>();
+		List<UncertainTransaction<Integer>> uncertainDB = new ArrayList<>();
 		try {
 			UncertainTransaction.loadFile(fileToPath("T40I10D100K_with_P.dat.txt"), uncertainDB);
 //			UncertainTransaction.loadFile(fileToPath("test.txt"), uncertainDB);
@@ -25,13 +25,13 @@ public class MainAPFI_MAX {
 		double minProbability = 0.6;
 
 		// Create an instance of algorithms.APFI_MAX
-		APFI_MAX<String> apfiMax = new APFI_MAX<>(uncertainDB, minSupport, minProbability);
+		APFI_MAX<Integer> apfiMax = new APFI_MAX<>(uncertainDB, minSupport, minProbability);
 
 		// Run the algorithms.APFI_MAX algorithm
 		apfiMax.runAPFI_MAX();
 		// Print the PMFIs
 		System.out.println("PMFIs:");
-		for (Set<String> pmfi : apfiMax.PMFIs) {
+		for (Set<Integer> pmfi : apfiMax.PMFIs) {
 			System.out.println(pmfi);
 		}
 		apfiMax.printStats();
