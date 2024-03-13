@@ -19,12 +19,11 @@ public class MainCGEB {
 			e.printStackTrace();
 		}
 
-		double minSupport = 0.4;
-		double minProbability = 0.06;
+		double minSupport = 0.01;
+		double minProbability = 0.6;
 
 		CGEB cgeb = new CGEB(uncertainDB, minSupport, minProbability);
 		Set<Set<?>> candidates = cgeb.generateCandidates();
-
 		System.out.println("Candidates:");
 		for (Set<?> candidate : candidates) {
 			System.out.println(candidate);

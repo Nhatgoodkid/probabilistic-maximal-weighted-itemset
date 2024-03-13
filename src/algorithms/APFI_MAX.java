@@ -11,6 +11,12 @@ public class APFI_MAX<T> {
 	double minProbability;
 	public Set<Set<T>> PMFIs;
 
+	/** start time of latest execution */
+	protected long startTimestamp;
+
+	/** end time of latest execution */
+	protected long endTimestamp;
+
 	public APFI_MAX(List<UncertainTransaction<T>> uncertainDB, double minSupport, double minProbability) {
 		this.uncertainDB = uncertainDB;
 		this.minSupport = minSupport;
@@ -18,10 +24,16 @@ public class APFI_MAX<T> {
 		this.PMFIs = new HashSet<>();
 	}
 
+	/**
+	 * Runs the APFI-MAX algorithm to mine frequent multiple-itemsets from the provided uncertain database.
+	 * This method performs candidate generation, estimation, and confirmation steps to identify frequent itemsets
+	 * satisfying the minimum support and minimum probability thresholds.
+	 */
 	public void runAPFI_MAX() {
 		CGEB<T> cgeb = new CGEB<>(uncertainDB, minSupport, minProbability);
 		Set<Set<T>> candidates = cgeb.generateCandidates();
 
+		startTimestamp = System.currentTimeMillis();
 		List<Set<T>> frequentItemsets = new ArrayList<>();
 		List<Set<T>> candidatesOfLength = new ArrayList<>();
 
@@ -47,8 +59,17 @@ public class APFI_MAX<T> {
 
 			candidatesOfLength.clear();
 		}
+		endTimestamp = System.currentTimeMillis();
 	}
 
+	/**
+	 * Checks if a given itemset is frequent based on estimation using its expected support and variance.
+	 * This method calculates the expectation and variance of the itemset's support and applies the FM test
+	 * to compare them against the minimum support and minimum probability thresholds.
+	 *
+	 * @param itemset the itemset to check for frequency
+	 * @return true if the itemset is estimated to be frequent, false otherwise
+	 */
 	boolean isFrequentByEstimation(Set<T> itemset) {
 		Map<T, Double> itemSupports = getItemSupports();
 		double expectation = getExpectation(itemset, itemSupports);
@@ -58,6 +79,12 @@ public class APFI_MAX<T> {
 		return expectation >= lowerBound && FM(itemset, minSupport, minProbability, expectation, variance);
 	}
 
+	/**
+	 * Calculates the support for each item in the uncertain database.
+	 * This method iterates through all transactions and sums the probabilities of each item across transactions.
+	 *
+	 * @return a map where keys are items and values are their corresponding total support (sum of probabilities)
+	 */
 	private Map<T, Double> getItemSupports() {
 		Map<T, Double> supports = new HashMap<>();
 		for (UncertainTransaction<T> transaction : uncertainDB) {
@@ -68,6 +95,15 @@ public class APFI_MAX<T> {
 		return supports;
 	}
 
+	/**
+	 * Calculates the expected support of a given itemset based on the item supports in the database.
+	 * This method sums the individual item supports in the itemset, then subtracts the expected support
+	 * of the union of all items (adjusted for itemset size).
+	 *
+	 * @param itemset the itemset for which to calculate expectation
+	 * @param itemSupports a map containing the support for each item
+	 * @return the expected support of the itemset
+	 */
 	private double getExpectation(Set<T> itemset, Map<T, Double> itemSupports) {
 		double expectation = 0.0;
 		for (T item : itemset) {
@@ -77,6 +113,15 @@ public class APFI_MAX<T> {
 		return expectation;
 	}
 
+	/**
+	 * Calculates the variance of the support for a given itemset based on the item supports in the database.
+	 * This method iterates through each item in the itemset, calculates the product of its support and
+	 * (1 - support), and sums these values to represent the variance.
+	 *
+	 * @param itemset the itemset for which to calculate variance
+	 * @param itemSupports a map containing the support for each item
+	 * @return the variance of the itemset's support
+	 */
 	private double getVariance(Set<T> itemset, Map<T, Double> itemSupports) {
 		double variance = 0.0;
 		for (T item : itemset) {
@@ -85,6 +130,13 @@ public class APFI_MAX<T> {
 		return variance;
 	}
 
+	/**
+	 * Calculate the union expectation for a given itemset based on the item supports.
+	 *
+	 * @param  itemset      the set of items to calculate the union expectation for
+	 * @param  itemSupports a map containing items as keys and their supports as values
+	 * @return the calculated union expectation value
+	 */
 	private double getUnionExpectation(Set<T> itemset, Map<T, Double> itemSupports) {
 		double unionExpectation = 1.0;
 		for (T item : itemset) {
@@ -97,6 +149,22 @@ public class APFI_MAX<T> {
 		return 2 * minSupport - Math.log(minProbability) - Math.sqrt(Math.log(1 / minProbability) * (Math.log(1 / minProbability) - 8 * minSupport * Math.log(minProbability))) / 2;
 	}
 
+	/**
+	 * Applies the FM test to determine if a given itemset is likely frequent based on its estimated support and variance.
+	 *
+	 * This method calculates the upper bound for expected support and compares it to the actual expectation.
+	 * If the expectation is greater than or equal to the upper bound, the itemset is considered frequent without further evaluation.
+	 * Otherwise, the FM test is performed using the standard normal distribution. It calculates the standard normal value
+	 * based on the difference between the minimum support and the itemset's expectation, then uses the cumulative distribution function (CDF)
+	 * of the standard normal distribution to get the frequency. The itemset is considered frequent if this frequency is greater than or equal to the minimum probability threshold.
+	 *
+	 * @param itemset the itemset to evaluate
+	 * @param minSupport the minimum support threshold
+	 * @param minProbability the minimum probability threshold
+	 * @param expectation the expected support of the itemset
+	 * @param variance the variance of the itemset's support
+	 * @return true if the itemset is estimated to be frequent based on the FM test, false otherwise
+	 */
 	private boolean FM(Set<T> itemset, double minSupport, double minProbability, double expectation, double variance) {
 		double upperBound = getUpperBoundExpectation(minSupport, minProbability);
 		if (expectation >= upperBound) {
@@ -112,6 +180,28 @@ public class APFI_MAX<T> {
 		return minSupport - Math.log(1 - minProbability) + Math.sqrt(Math.log(1 - minProbability) * (Math.log(1 - minProbability) - 2 * minSupport * Math.log(1 - minProbability)));
 	}
 
+	/**
+	 * Print statistics about the latest execution.
+	 */
+	public void printStats() {
+		System.out
+				.println("=============  APFI-MAX - STATS =============");
+		long temps = endTimestamp - startTimestamp;
+//		System.out.println(" Total time ~ " + temps + " ms");
+		System.out.println(" Transactions count from database : "
+				+ uncertainDB.size());
+		for(UncertainTransaction uncertainTransaction: uncertainDB) {
+			System.out.println("uncertainTransaction : " + uncertainTransaction.items);
+		}
+		System.out.println(" Total time ~ " + temps + " ms");
+		System.out
+				.println("===================================================");
+	}
+
+	/**
+	 * This private static class provides utility methods for calculations involving the standard normal distribution.
+	 * It is used internally by the APFI-MAX algorithm.
+	 */
 	private static class NormalDistribution {
 		private static final double SQRT_2PI = Math.sqrt(2 * Math.PI);
 

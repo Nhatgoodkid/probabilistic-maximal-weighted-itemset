@@ -14,27 +14,27 @@ public class MainAPFI_MAX {
 		// Load the uncertain database
 		List<UncertainTransaction<String>> uncertainDB = new ArrayList<>();
 		try {
-//			UncertainTransaction.loadFile(".//T40I10D100K_with_P.dat.txt", uncertainDB);
-			UncertainTransaction.loadFile(fileToPath("test.txt"), uncertainDB);
+			UncertainTransaction.loadFile(fileToPath("T40I10D100K_with_P.dat.txt"), uncertainDB);
+//			UncertainTransaction.loadFile(fileToPath("test.txt"), uncertainDB);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		// Set the minimum support and minimum probability
-		double minSupport = 0.4;
-		double minProbability = 0.06;
+		double minSupport = 0.001;
+		double minProbability = 0.6;
 
 		// Create an instance of algorithms.APFI_MAX
 		APFI_MAX<String> apfiMax = new APFI_MAX<>(uncertainDB, minSupport, minProbability);
 
 		// Run the algorithms.APFI_MAX algorithm
 		apfiMax.runAPFI_MAX();
-
 		// Print the PMFIs
 		System.out.println("PMFIs:");
 		for (Set<String> pmfi : apfiMax.PMFIs) {
 			System.out.println(pmfi);
 		}
+		apfiMax.printStats();
 	}
 
 	public static String fileToPath(String filename) throws UnsupportedEncodingException {

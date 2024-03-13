@@ -27,37 +27,16 @@ public class UncertainTransaction<T> {
 			myInput = new BufferedReader(new InputStreamReader(fin));
 			// for each transaction (line) in the input file
 			while ((thisLine = myInput.readLine()) != null) {
-				// if the line is  a comment, is  empty or is a
-				// kind of metadata
-				if (thisLine.isEmpty() == true ||
-						thisLine.charAt(0) == '#' || thisLine.charAt(0) == '%'
-						|| thisLine.charAt(0) == '@') {
+				// if the line is a comment, is empty, or is a kind of metadata
+				if (thisLine.isEmpty() || thisLine.charAt(0) == '#' || thisLine.charAt(0) == '%' || thisLine.charAt(0) == '@') {
 					continue;
 				}
 
 				// process the transaction
-				List<Object> items = new ArrayList<>();
-				double probability = 0.0;
+				List<UncertainTransaction<T>> transactions = parseTransaction(thisLine);
 
-				// Use a regular expression to separate items and probability
-				Pattern pattern = Pattern.compile("^(.*) \\(([^)]*)\\)$");
-				Matcher matcher = pattern.matcher(thisLine);
-				if (matcher.matches()) {
-					String itemsString = matcher.group(1).trim();
-					String probString = matcher.group(2);
-
-					// Parse items
-					for (String itemString : itemsString.split("\\s+")) {
-						items.add(parseItemID(itemString));
-					}
-
-					// Parse probability
-					probability = Double.parseDouble(probString);
-				}
-
-				// Create pattern.itemset.UncertainTransaction object and add it to the list
-				uncertainDB.add(new UncertainTransaction(items, probability));
-
+				// Add transactions to uncertainDB
+				uncertainDB.addAll(transactions);
 			}
 		} catch (Exception e) {
 			// catch exceptions
@@ -70,18 +49,32 @@ public class UncertainTransaction<T> {
 		}
 	}
 
+	private static <T> List<UncertainTransaction<T>> parseTransaction(String transactionLine) {
+		List<UncertainTransaction<T>> transactions = new ArrayList<>();
+
+		// Use a regular expression to separate items and probability
+		Pattern pattern = Pattern.compile("([\\w\\d]+)\\((\\d*\\.?\\d+)\\)");
+		Matcher matcher = pattern.matcher(transactionLine);
+
+		while (matcher.find()) {
+			T item = parseItemID(matcher.group(1));
+			double probability = Double.parseDouble(matcher.group(2));
+			List<T> items = new ArrayList<>();
+			items.add(item);
+			transactions.add(new UncertainTransaction<>(items, probability));
+		}
+
+		return transactions;
+	}
 
 	private static <T> T parseItemID(String itemString) {
 		// Check if data Type of ID
 		// if ID is Integer
-		if (itemString.matches("\\d+")) {
+		try {
 			return (T) Integer.valueOf(itemString);
-		}
-		// if ID is String
-		else {
+		} catch (NumberFormatException e) {
+			// if not Integer, return as String
 			return (T) itemString;
 		}
 	}
-
-
 }

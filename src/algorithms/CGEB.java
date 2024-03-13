@@ -15,6 +15,11 @@ public class CGEB<T> {
 		this.minProbability = minProbability;
 	}
 
+	/**
+	 * A method to generate candidates for frequent itemsets.
+	 *
+	 * @return         	a set of sets representing the generated candidates
+	 */
 	public Set<Set<T>> generateCandidates() {
 		Set<Set<T>> candidates = new HashSet<>();
 
@@ -47,6 +52,11 @@ public class CGEB<T> {
 		return candidates;
 	}
 
+	/**
+	 * Generate a map of items with their corresponding support values.
+	 *
+	 * @return         the map of items and their support values
+	 */
 	private Map<T, Double> getItemSupports() {
 		Map<T, Double> supports = new HashMap<>();
 		for (UncertainTransaction<T> transaction : uncertainDB) {
@@ -57,11 +67,18 @@ public class CGEB<T> {
 		return supports;
 	}
 
+	/**
+	 * Generate extensions from a candidate set by adding new elements based on support values.
+	 *
+	 * @param  candidate     the current candidate set of elements
+	 * @param  k            the size of the desired extension sets
+	 * @param  itemSupports a map of items to their support values
+	 * @return              a set of sets representing the generated extensions
+	 */
 	private Set<Set<T>> generateExtensions(Set<T> candidate, int k, Map<T, Double> itemSupports) {
 		Set<Set<T>> extensions = new HashSet<>();
 		List<T> items = new ArrayList<>(itemSupports.keySet());
-		for (int i = 0; i < items.size(); i++) {
-			T item = items.get(i);
+		for (T item : items) {
 			if (!candidate.contains(item)) {
 				Set<T> extension = new HashSet<>(candidate);
 				extension.add(item);
@@ -73,6 +90,13 @@ public class CGEB<T> {
 		return extensions;
 	}
 
+	/**
+	 * A description of the entire Java function.
+	 *
+	 * @param  itemset     description of parameter
+	 * @param  itemSupports    description of parameter
+	 * @return         	description of return value
+	 */
 	private boolean isFrequentByExpectation(Set<T> itemset, Map<T, Double> itemSupports) {
 		double expectation = 0.0;
 		for (T item : itemset) {
@@ -83,6 +107,13 @@ public class CGEB<T> {
 		return expectation >= lowerBound;
 	}
 
+	/**
+	 * Calculate the union expectation of the given itemset based on the provided item supports.
+	 *
+	 * @param  itemset       the set of items for which to calculate the union expectation
+	 * @param  itemSupports  a map containing the support values for each item in the itemset
+	 * @return               the calculated union expectation
+	 */
 	private double getUnionExpectation(Set<T> itemset, Map<T, Double> itemSupports) {
 		double unionExpectation = 1.0;
 		for (T item : itemset) {
