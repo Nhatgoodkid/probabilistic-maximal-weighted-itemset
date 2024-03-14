@@ -18,9 +18,7 @@ public class MainCGEB {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		for(UncertainTransaction<Integer> transaction : uncertainDB) {
-			System.out.println(transaction.weight);
-		}
+
 		double minSupport = 0.01;
 		double minProbability = 0.6;
 

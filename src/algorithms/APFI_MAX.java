@@ -89,7 +89,7 @@ public class APFI_MAX<T> {
 		Map<T, Double> supports = new HashMap<>();
 		for (UncertainTransaction<T> transaction : uncertainDB) {
 			for (T item : transaction.items) {
-				supports.put(item, supports.getOrDefault(item, 0.0) + transaction.probability);
+				supports.put(item, supports.getOrDefault(item, 0.0) + transaction.probability * transaction.weight);
 			}
 		}
 		return supports;
