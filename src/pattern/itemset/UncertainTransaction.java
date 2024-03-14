@@ -14,16 +14,19 @@ public class UncertainTransaction<T> {
 	public List<T> items;
 	public double probability;
 
-	UncertainTransaction(List<T> items, double probability) {
+	public double weight;
+
+	UncertainTransaction(List<T> items, double probability, double weight) {
 		this.items = items;
 		this.probability = probability;
+		this.weight = weight;
 	}
 
 	public static <T> void loadFile(String path, List<UncertainTransaction<T>> uncertainDB) throws IOException {
 		String thisLine;
 		BufferedReader myInput = null;
 		try {
-			FileInputStream fin = new FileInputStream(new File(path));
+			FileInputStream fin = new FileInputStream(path);
 			myInput = new BufferedReader(new InputStreamReader(fin));
 			// for each transaction (line) in the input file
 			while ((thisLine = myInput.readLine()) != null) {
@@ -53,15 +56,17 @@ public class UncertainTransaction<T> {
 		List<UncertainTransaction<T>> transactions = new ArrayList<>();
 
 		// Use a regular expression to separate items and probability
-		Pattern pattern = Pattern.compile("([\\w\\d]+)\\((\\d*\\.?\\d+)\\)");
+		Pattern pattern = Pattern.compile("([\\w\\d]+)\\((\\d*\\.?\\d+)\\)\\[(\\d*\\.?\\d+)\\]");
 		Matcher matcher = pattern.matcher(transactionLine);
 
 		while (matcher.find()) {
 			T item = parseItemID(matcher.group(1));
 			double probability = Double.parseDouble(matcher.group(2));
+			double weight = Double.parseDouble(matcher.group(3));
+
 			List<T> items = new ArrayList<>();
 			items.add(item);
-			transactions.add(new UncertainTransaction<>(items, probability));
+			transactions.add(new UncertainTransaction<>(items, probability, weight));
 		}
 
 		return transactions;

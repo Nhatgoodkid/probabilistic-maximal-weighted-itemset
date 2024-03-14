@@ -11,7 +11,7 @@ public class MainTest {
 
     public static void main(String [] arg) throws IOException{
 
-        String inputPath= "test.txt";
+        String inputPath= "dataset/test.txt";
 
         // Loading the binary context
         UTransactionDatabase context = new UTransactionDatabase();

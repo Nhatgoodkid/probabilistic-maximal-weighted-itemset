@@ -13,9 +13,11 @@ public class MainAPFI_MAX {
 	public static void main(String[] args) {
 		// Load the uncertain database
 		List<UncertainTransaction<Integer>> uncertainDB = new ArrayList<>();
+
+		String inputPath = "dataset/test.txt";
+//		String inputPath = "dataset/T40I10D100K_with_P.dat.txt";
 		try {
-			UncertainTransaction.loadFile(fileToPath("T40I10D100K_with_P.dat.txt"), uncertainDB);
-//			UncertainTransaction.loadFile(fileToPath("test.txt"), uncertainDB);
+			UncertainTransaction.loadFile(fileToPath(inputPath), uncertainDB);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

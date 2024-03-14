@@ -9,8 +9,8 @@ public class MainGenerateProb {
 
     public static void main(String [] arg) throws IOException{
 
-        String inputPath= "T40I10D100K.dat.txt";
-        String inputWithProbPath = ".//T40I10D100K_with_P.dat.txt";
+        String inputPath= "dataset/T40I10D100K.dat.txt";
+        String inputWithProbPath = ".//T40I10D100K_with_P_W.dat.txt";
         // Loading the binary context
         UTransactionDatabase context = new UTransactionDatabase();
 

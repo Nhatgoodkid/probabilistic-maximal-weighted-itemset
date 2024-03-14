@@ -11,14 +11,16 @@ import java.util.Set;
 public class MainCGEB {
 	public static void main(String[] args) {
 		List<UncertainTransaction<Integer>> uncertainDB = new ArrayList<>();
-
+		String inputPath = "dataset/test.txt";
+//		String inputPath = "dataset/T40I10D100K_with_P.dat.txt";
 		try {
-			UncertainTransaction.loadFile(fileToPath("test.txt"), uncertainDB);
-//			UncertainTransaction.loadFile(".//T40I10D100K_with_P.dat.txt", uncertainDB);
+			UncertainTransaction.loadFile(fileToPath(inputPath), uncertainDB);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		for(UncertainTransaction<Integer> transaction : uncertainDB) {
+			System.out.println(transaction.weight);
+		}
 		double minSupport = 0.01;
 		double minProbability = 0.6;
 

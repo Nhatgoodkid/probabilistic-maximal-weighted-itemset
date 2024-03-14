@@ -13,9 +13,9 @@ public class MainReduceFileSize {
         UTransactionDatabase context = new UTransactionDatabase();
 
         // File Path dataset you need to reduce
-        String originalFilePath = ".//T40I10D100K_with_P.dat.txt";
+        String originalFilePath = "dataset/T40I10D100K_with_P.dat.txt";
         // Output you want to save after success reduced size
-        String reducedFilePath = "reducedFile.txt";
+        String reducedFilePath = "dataset/reducedFile.txt";
         // Change percentage depends on requirement
         double percentage = 0.2;
 

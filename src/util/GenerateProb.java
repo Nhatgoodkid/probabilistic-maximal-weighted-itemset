@@ -45,7 +45,9 @@ public class GenerateProb {
                 StringBuilder output = new StringBuilder();
                 for (String num : numbers) {
                     double probability = random.nextDouble();
-                    output.append(num).append("(").append(String.format("%.2f", probability)).append(") ");
+                    double weight = random.nextDouble();
+
+                    output.append(num).append("(").append(String.format("%.2f", probability)).append(")[").append(String.format("%.2f", weight)).append("] ");
                 }
 
                 // Write the result to the output file
@@ -53,7 +55,7 @@ public class GenerateProb {
                 writer.write(System.lineSeparator()); // Move to the next line in the output file
             }
 
-            System.out.println("Random probabilities generated and written to " + generateProb.getOutputFilePath());
+            System.out.println("Random probabilities and weight generated and written to " + generateProb.getOutputFilePath());
 
         } catch (IOException e) {
             e.printStackTrace();
