@@ -2,6 +2,7 @@ package algorithms;
 
 import pattern.itemset.UncertainTransaction;
 
+import java.io.IOException;
 import java.util.*;
 
 public class APFI_MAX<T> {
@@ -11,11 +12,15 @@ public class APFI_MAX<T> {
 	double minProbability;
 	public Set<Set<T>> PMFIs;
 
+
 	/** start time of latest execution */
 	protected long startTimestamp;
 
 	/** end time of latest execution */
 	protected long endTimestamp;
+
+	/**  the number of itemsets found */
+	private int itemsetCount;
 
 	public APFI_MAX(List<UncertainTransaction<T>> uncertainDB, double minSupport, double minProbability) {
 		this.uncertainDB = uncertainDB;
@@ -29,10 +34,10 @@ public class APFI_MAX<T> {
 	 * This method performs candidate generation, estimation, and confirmation steps to identify frequent itemsets
 	 * satisfying the minimum support and minimum probability thresholds.
 	 */
-	public void runAPFI_MAX() {
+	public void runAPFI_MAX() throws IOException {
 		CGEB<T> cgeb = new CGEB<>(uncertainDB, minSupport, minProbability);
-		Set<Set<T>> candidates = cgeb.generateCandidates();
-
+		Set<Set<T>> candidates = cgeb.generateCandidates("output_CGEB_1%.txt");
+		cgeb.printStats();
 		startTimestamp = System.currentTimeMillis();
 		List<Set<T>> frequentItemsets = new ArrayList<>();
 		List<Set<T>> candidatesOfLength = new ArrayList<>();
@@ -180,6 +185,7 @@ public class APFI_MAX<T> {
 		return minSupport - Math.log(1 - minProbability) + Math.sqrt(Math.log(1 - minProbability) * (Math.log(1 - minProbability) - 2 * minSupport * Math.log(1 - minProbability)));
 	}
 
+
 	/**
 	 * Print statistics about the latest execution.
 	 */
@@ -188,11 +194,7 @@ public class APFI_MAX<T> {
 				.println("=============  APFI-MAX - STATS =============");
 		long temps = endTimestamp - startTimestamp;
 //		System.out.println(" Total time ~ " + temps + " ms");
-		System.out.println(" Transactions count from database : "
-				+ uncertainDB.size());
-		for(UncertainTransaction uncertainTransaction: uncertainDB) {
-			System.out.println("uncertainTransaction : " + uncertainTransaction.items);
-		}
+
 		System.out.println(" Total time ~ " + temps + " ms");
 		System.out
 				.println("===================================================");

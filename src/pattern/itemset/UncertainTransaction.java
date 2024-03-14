@@ -16,6 +16,8 @@ public class UncertainTransaction<T> {
 
 	public double weight;
 
+	public static int transaction;
+
 	UncertainTransaction(List<T> items, double probability, double weight) {
 		this.items = items;
 		this.probability = probability;
@@ -28,6 +30,8 @@ public class UncertainTransaction<T> {
 		try {
 			FileInputStream fin = new FileInputStream(path);
 			myInput = new BufferedReader(new InputStreamReader(fin));
+			transaction = 0; // Initialize transaction count
+
 			// for each transaction (line) in the input file
 			while ((thisLine = myInput.readLine()) != null) {
 				// if the line is a comment, is empty, or is a kind of metadata
@@ -37,6 +41,7 @@ public class UncertainTransaction<T> {
 
 				// process the transaction
 				List<UncertainTransaction<T>> transactions = parseTransaction(thisLine);
+				transaction++; // Increment transaction count
 
 				// Add transactions to uncertainDB
 				uncertainDB.addAll(transactions);

@@ -1,9 +1,11 @@
 import pattern.itemset.UTransactionDatabase;
 import util.ReduceFileSize;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 
 
 public class MainReduceFileSize {
@@ -13,13 +15,13 @@ public class MainReduceFileSize {
         UTransactionDatabase context = new UTransactionDatabase();
 
         // File Path dataset you need to reduce
-        String originalFilePath = "dataset/T40I10D100K_with_P.dat.txt";
+        String originalFilePath = "dataset/T40I10D100K_with_P_W.dat.txt";
         // Output you want to save after success reduced size
-        String reducedFilePath = "dataset/reducedFile.txt";
+        String reducedFilePath = ".//src/dataset/T40I10D100K_with_P_W_80%.dat.txt";
         // Change percentage depends on requirement
-        double percentage = 0.2;
+        double percentage = 0.01;
 
-        ReduceFileSize reduceFileSize = new ReduceFileSize(originalFilePath, reducedFilePath, percentage);
+        ReduceFileSize reduceFileSize = new ReduceFileSize(fileToPath(originalFilePath), reducedFilePath, percentage);
         // Reduce large dataset with a certain percentage
         reducedFilePath = reduceFileSize.reduceFileSize(reduceFileSize);
 
@@ -33,8 +35,10 @@ public class MainReduceFileSize {
     }
 
     public static String fileToPath(String filename) throws UnsupportedEncodingException {
-        URL url = Main.class.getResource(filename);
-        return java.net.URLDecoder.decode(url.getPath(),"UTF-8");    }
+        String decodedPath = URLDecoder.decode(MainReduceFileSize.class.getResource(filename).getFile(), "UTF-8");
+        return new File(decodedPath).getPath();
+    }
+
 }
 
 

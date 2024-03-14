@@ -2,12 +2,28 @@ package algorithms;
 
 import pattern.itemset.UncertainTransaction;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class CGEB<T> {
 	List<UncertainTransaction<T>> uncertainDB;
+
 	double minSupport;
 	double minProbability;
+
+	/**  the number of itemsets found */
+	private int itemsetCount;
+
+	/** start time of latest execution */
+	protected long startTimestamp;
+
+	/** end time of latest execution */
+	protected long endTimestamp;
+
+	/** write to file */
+	BufferedWriter writer = null;
 
 	public CGEB(List<UncertainTransaction<T>> uncertainDB, double minSupport, double minProbability) {
 		this.uncertainDB = uncertainDB;
@@ -20,7 +36,10 @@ public class CGEB<T> {
 	 *
 	 * @return         	a set of sets representing the generated candidates
 	 */
-	public Set<Set<T>> generateCandidates() {
+	public Set<Set<T>> generateCandidates(String output) throws IOException {
+		itemsetCount = 0;
+		startTimestamp = System.currentTimeMillis();
+		writer = new BufferedWriter(new FileWriter(output));
 		Set<Set<T>> candidates = new HashSet<>();
 
 		// Generate frequent 1-itemsets
@@ -48,7 +67,10 @@ public class CGEB<T> {
 			prevCandidates = nextCandidates;
 			k++;
 		}
-
+		endTimestamp = System.currentTimeMillis();
+		// Generate item supports
+		writeItemsetsToFile(candidates, writer, itemSupports);
+		writer.close();
 		return candidates;
 	}
 
@@ -124,5 +146,43 @@ public class CGEB<T> {
 
 	private double getLowerBoundExpectation(double minSupport, double minProbability) {
 		return 2 * minSupport - Math.log(minProbability) - Math.sqrt(Math.log(1 / minProbability) * (Math.log(1 / minProbability) - 8 * minSupport * Math.log(minProbability))) / 2;
+	}
+
+	private double calculateSupport(Set<T> itemset, Map<T, Double> itemSupports) {
+		double support = 0.0;
+		for (T item : itemset) {
+			support += itemSupports.get(item);
+		}
+		return support;
+	}
+
+	/**
+	 * Print statistics about the latest execution.
+	 */
+	public void printStats() {
+		System.out
+				.println("=============  CGEB - STATS =============");
+		long temps = endTimestamp - startTimestamp;
+//		System.out.println(" Total time ~ " + temps + " ms");
+		System.out.println(" Transactions count from database : " + UncertainTransaction.transaction);
+		System.out.println(" Uncertain itemsets count : " + itemsetCount);
+		System.out.println(" Total time ~ " + temps + " ms");
+		System.out
+				.println("===================================================");
+	}
+
+	/**
+	 * Write itemsets to the output file.
+	 *
+	 * @param itemsets The set of itemsets to be written to the file.
+	 * @throws IOException If an I/O error occurs while writing to the file.
+	 */
+	private void writeItemsetsToFile(Set<Set<T>> itemsets, BufferedWriter writer, Map<T, Double> itemSupports) throws IOException {
+		for (Set<T> candidate : itemsets) {
+			double support = calculateSupport(candidate, itemSupports);
+			writer.write(candidate.toString() + " (Support: " + support + ")");
+			writer.newLine();
+			itemsetCount++;
+		}
 	}
 }
