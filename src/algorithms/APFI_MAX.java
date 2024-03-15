@@ -2,6 +2,8 @@ package algorithms;
 
 import pattern.itemset.UncertainTransaction;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -34,9 +36,9 @@ public class APFI_MAX<T> {
 	 * This method performs candidate generation, estimation, and confirmation steps to identify frequent itemsets
 	 * satisfying the minimum support and minimum probability thresholds.
 	 */
-	public void runAPFI_MAX() throws IOException {
+	public void runAPFI_MAX(String output) throws IOException {
 		CGEB<T> cgeb = new CGEB<>(uncertainDB, minSupport, minProbability);
-		Set<Set<T>> candidates = cgeb.generateCandidates("output_CGEB_1%.txt");
+		Set<Set<T>> candidates = cgeb.generateCandidates();
 		cgeb.printStats();
 		startTimestamp = System.currentTimeMillis();
 		List<Set<T>> frequentItemsets = new ArrayList<>();
@@ -65,6 +67,24 @@ public class APFI_MAX<T> {
 			candidatesOfLength.clear();
 		}
 		endTimestamp = System.currentTimeMillis();
+		writePMFIsToFile(output);
+	}
+
+	/**
+	 * Write PMFIs and timestamp to a file.
+	 *
+	 * @param outputFilename The name of the file to write to.
+	 * @throws IOException If an I/O error occurs while writing to the file.
+	 */
+	private void writePMFIsToFile(String outputFilename) throws IOException {
+		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilename));
+		writer.write("Running time: " + (endTimestamp - startTimestamp)  + " ms\n");
+		writer.write("minpro: " + this.minProbability + "\n");
+		writer.write("PMFIs:\n");
+		for (Set<T> itemset : PMFIs) {
+			writer.write(itemset.toString() + "\n");
+		}
+		writer.close();
 	}
 
 	/**

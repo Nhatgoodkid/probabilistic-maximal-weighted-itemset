@@ -36,10 +36,9 @@ public class CGEB<T> {
 	 *
 	 * @return         	a set of sets representing the generated candidates
 	 */
-	public Set<Set<T>> generateCandidates(String output) throws IOException {
+	public Set<Set<T>> generateCandidates() {
 		itemsetCount = 0;
 		startTimestamp = System.currentTimeMillis();
-		writer = new BufferedWriter(new FileWriter(output));
 		Set<Set<T>> candidates = new HashSet<>();
 
 		// Generate frequent 1-itemsets
@@ -62,15 +61,13 @@ public class CGEB<T> {
 			for (Set<T> candidate : prevCandidates) {
 				Set<Set<T>> extensions = generateExtensions(candidate, k, itemSupports);
 				nextCandidates.addAll(extensions);
+				itemsetCount += extensions.size();
 			}
 			candidates.addAll(nextCandidates);
 			prevCandidates = nextCandidates;
 			k++;
 		}
 		endTimestamp = System.currentTimeMillis();
-		// Generate item supports
-		writeItemsetsToFile(candidates, writer, itemSupports);
-		writer.close();
 		return candidates;
 	}
 
@@ -169,20 +166,5 @@ public class CGEB<T> {
 		System.out.println(" Total time ~ " + temps + " ms");
 		System.out
 				.println("===================================================");
-	}
-
-	/**
-	 * Write itemsets to the output file.
-	 *
-	 * @param itemsets The set of itemsets to be written to the file.
-	 * @throws IOException If an I/O error occurs while writing to the file.
-	 */
-	private void writeItemsetsToFile(Set<Set<T>> itemsets, BufferedWriter writer, Map<T, Double> itemSupports) throws IOException {
-		for (Set<T> candidate : itemsets) {
-			double support = calculateSupport(candidate, itemSupports);
-			writer.write(candidate.toString() + " (Support: " + support + ")");
-			writer.newLine();
-			itemsetCount++;
-		}
 	}
 }
