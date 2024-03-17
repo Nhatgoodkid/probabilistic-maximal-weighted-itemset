@@ -14,11 +14,11 @@ public class MainReduceFileSize {
         UTransactionDatabase context = new UTransactionDatabase();
 
         // File Path dataset you need to reduce
-        String originalFilePath = "dataset/T40I10D100K/T40I10D100K_with_P_W.dat.txt";
+        String originalFilePath = "dataset/T10I4D100K/T10I4D100K_with_P_W.dat.txt";
         // Output you want to save after success reduced size
-        String reducedFilePath = ".//src/dataset/T40I10D100K/T40I10D100K_with_P_W_50%.dat.txt";
+        String reducedFilePath = ".//src/dataset/T10I4D100K/T10I4D100K_with_P_W_40%.dat.txt";
         // Change percentage depends on requirement
-        double percentage = 0.5;
+        double percentage = 0.4;
 
         ReduceFileSize reduceFileSize = new ReduceFileSize(fileToPath(originalFilePath), reducedFilePath, percentage);
         // Reduce large dataset with a certain percentage

@@ -44,8 +44,9 @@ public class GenerateProb {
                 String[] numbers = line.split("\\s+");
                 StringBuilder output = new StringBuilder();
                 for (String num : numbers) {
-                    double probability = random.nextDouble();
-                    double weight = random.nextDouble();
+                    // Generate random probabilities and weights in the range (0, 1]
+                    double probability = random.nextDouble() * 0.99 + 0.01;
+                    double weight = random.nextDouble() * 0.99 + 0.01;
 
                     output.append(num).append("(").append(String.format("%.2f", probability)).append(")[").append(String.format("%.2f", weight)).append("] ");
                 }

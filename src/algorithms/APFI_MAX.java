@@ -6,6 +6,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import util.MemoryLogger;
 
 public class APFI_MAX<T> {
 
@@ -39,8 +40,12 @@ public class APFI_MAX<T> {
 	public void runAPFI_MAX(String output) throws IOException {
 		CGEB<T> cgeb = new CGEB<>(uncertainDB, minSupport, minProbability);
 		Set<Set<T>> candidates = cgeb.generateCandidates();
+		int itemsetCount = cgeb.getItemsetCount(); // Lấy số lượng itemset từ CGEB
+		int transactionCount = cgeb.getTransactionCount(); // Lấy số lượng giao dịch từ CGEB
 		cgeb.printStats();
+		MemoryLogger.getInstance().reset();
 		startTimestamp = System.currentTimeMillis();
+
 		List<Set<T>> frequentItemsets = new ArrayList<>();
 		List<Set<T>> candidatesOfLength = new ArrayList<>();
 
@@ -67,7 +72,8 @@ public class APFI_MAX<T> {
 			candidatesOfLength.clear();
 		}
 		endTimestamp = System.currentTimeMillis();
-		writePMFIsToFile(output);
+		MemoryLogger.getInstance().checkMemory();
+		writePMFIsToFile(output, itemsetCount, transactionCount);
 	}
 
 	/**
@@ -76,10 +82,14 @@ public class APFI_MAX<T> {
 	 * @param outputFilename The name of the file to write to.
 	 * @throws IOException If an I/O error occurs while writing to the file.
 	 */
-	private void writePMFIsToFile(String outputFilename) throws IOException {
+	private void writePMFIsToFile(String outputFilename, int itemsetCount, int transactionCount) throws IOException {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilename));
 		writer.write("Running time: " + (endTimestamp - startTimestamp)  + " ms\n");
-		writer.write("minpro: " + this.minProbability + "\n");
+		writer.write("Maximum memory usage : " + MemoryLogger.getInstance().getMaxMemory() + " mb\n");
+		writer.write("Itemset count: " + itemsetCount + "\n");
+		writer.write("Transaction count: " + transactionCount + "\n");
+		writer.write("minPro: " + this.minProbability + "\n");
+		writer.write("minSup: " + this.minSupport + "\n");
 		writer.write("PMFIs:\n");
 		for (Set<T> itemset : PMFIs) {
 			writer.write(itemset.toString() + "\n");
@@ -221,7 +231,7 @@ public class APFI_MAX<T> {
 	}
 
 	/**
-	 * This private static class provides utility methods for calculations involving the standard normal distribution.
+	 * This class provides utility methods for calculations involving the standard normal distribution.
 	 * It is used internally by the APFI-MAX algorithm.
 	 */
 	private static class NormalDistribution {

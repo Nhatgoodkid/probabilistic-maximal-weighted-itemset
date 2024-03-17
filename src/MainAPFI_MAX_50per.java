@@ -15,7 +15,7 @@ public class MainAPFI_MAX_50per {
 		List<UncertainTransaction<Integer>> uncertainDB = new ArrayList<>();
 
 //		String inputPath = "dataset/test.txt";
-		String inputPath = "dataset/T40I10D100K/T40I10D100K_with_P_W_50%.dat.txt";
+		String inputPath = "dataset/T10I4D100K/T10I4D100K_with_P_W_40%.dat.txt";
 		try {
 			UncertainTransaction.loadFile(fileToPath(inputPath), uncertainDB);
 		} catch (IOException e) {
@@ -23,14 +23,14 @@ public class MainAPFI_MAX_50per {
 		}
 
 		// Set the minimum support and minimum probability
-		double minSupport = 0.06;
+		double minSupport = 0.02;
 		double minProbability = 0.6;
 
 		// Create an instance of algorithms.APFI_MAX
 		APFI_MAX<Integer> apfiMax = new APFI_MAX<>(uncertainDB, minSupport, minProbability);
 
 		// Run the algorithms.APFI_MAX algorithm
-		apfiMax.runAPFI_MAX("pmfi_output_50%.txt");
+		apfiMax.runAPFI_MAX("pmfi_output2_40%.txt");
 		// Print the PMFIs
 		System.out.println("PMFIs:");
 		for (Set<Integer> pmfi : apfiMax.PMFIs) {

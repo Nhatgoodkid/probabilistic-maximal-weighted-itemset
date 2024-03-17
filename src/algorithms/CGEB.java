@@ -31,6 +31,14 @@ public class CGEB<T> {
 		this.minProbability = minProbability;
 	}
 
+	public int getTransactionCount() {
+		return uncertainDB.size();
+	}
+
+	public int getItemsetCount() {
+		return itemsetCount;
+	}
+
 	/**
 	 * A method to generate candidates for frequent itemsets.
 	 *
