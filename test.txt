@@ -1,11 +1,11 @@
-Running time: 12 ms
-Maximum memory usage : 4.0 mb
+Running time: 13 ms
+Maximum memory usage : 3.3220672607421875 mb
 Itemset count: 9
 Transaction count: 3
 minPro: 0.6
 minSup: 0.02
 PMFIs:
-[BCD]
+[ACD]
 [BCD, ACD]
 [BCD, ACD, ABCD]
 [BCD, ABCD]
